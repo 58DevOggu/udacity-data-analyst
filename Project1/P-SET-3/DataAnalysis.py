@@ -37,6 +37,10 @@ def entries_histogram(turnstile_weather):
     plt.figure()
     turnstile_weather[turnstile_weather.rain==0]['ENTRIESn_hourly'].hist(bins=200, label="No rain").set_xlim([0, 6000]) # your code here to plot a historgram for hourly entries when it is raining
     turnstile_weather[turnstile_weather.rain==1]['ENTRIESn_hourly'].hist(bins=200, label="Rain").set_xlim([0, 6000]) # your code here to plot a historgram for hourly entries when it is not raining
+	plt.suptitle('Histogram of ENTRIESn_hourly')
+    plt.xlabel('ENTRIESn_hourly')
+    plt.ylabel('Frequency')
+    plt.legend(['No rain', 'Rain'])
     return plt
 
 PROBLEM SET3 - 2a
