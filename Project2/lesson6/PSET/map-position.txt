@@ -1,0 +1,6 @@
+
+https://www.openstreetmap.org/export#map=12/40.5381/-74.3781
+
+Data downloaded was for Edison NJ area. 
+I chose the region as i live close by and know the area around. 
+Data set was downloaded using Overpass API as openstreet export didn’t work for the region I queried
