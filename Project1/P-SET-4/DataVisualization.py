@@ -80,3 +80,32 @@ def plot_weather_data(turnstile_weather):
     plot = ggplot(turnstile_weather, aes('UNIT', fill='rain'))+ geom_bar(binwidth=50)+           ggtitle("Ridership based on weather-Rain (Blue) / No Rain (Red)") +xlab("Stations") + ylab("Entries")
     return plot
 
+	def plot_weather_data_mean_day_of_week(turnstile_weather):
+    turnstile_weather = turnstile_weather[(turnstile_weather.rain == 1)]
+    grouped_dataframe = turnstile_weather[['day_week','ENTRIESn_hourly']]
+    grouped_dataframe = grouped_dataframe.groupby('day_week',as_index=False).mean()
+    plot = ggplot(grouped_dataframe, aes(x='day_week', y='Mean ENTRIESn_hourly')) + \
+            geom_bar(aes(x='day_week',weight='ENTRIESn_hourly'), fill='blue', stat="bar")+ \
+            scale_x_continuous(name='Weekday',
+                           breaks=[0, 1, 2, 3, 4, 5, 6],
+                           labels=['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+                                   'Thursday', 'Friday', 'Saturday'])+ \
+            ggtitle('Average ENTRIESn_hourly by Weekday') + \
+            xlab('Day of Week') + ylab('Mean Entries Hourly')
+    
+    return plot
+	
+def plot_weather_data_total_day_of_week(turnstile_weather):
+    turnstile_weather = turnstile_weather[(turnstile_weather.rain == 1)]
+    grouped_dataframe = turnstile_weather[['day_week','ENTRIESn_hourly']]
+    grouped_dataframe = grouped_dataframe.groupby('day_week',as_index=False).sum()
+    plot = ggplot(grouped_dataframe, aes(x='day_week', y='Mean ENTRIESn_hourly')) + \
+            geom_bar(aes(x='day_week',weight='ENTRIESn_hourly'), fill='blue', stat="bar")+ \
+            scale_x_continuous(name='Weekday',
+                           breaks=[0, 1, 2, 3, 4, 5, 6],
+                           labels=['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+                                   'Thursday', 'Friday', 'Saturday'])+ \
+            ggtitle('Average ENTRIESn_hourly by Weekday') + \
+            xlab('Day of Week') + ylab('Mean Entries Hourly')
+    
+    return plot
