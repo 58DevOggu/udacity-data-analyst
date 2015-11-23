@@ -1,0 +1,536 @@
+TITLE by YOUR_NAME_HERE
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(plyr) 
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(reshape2)
+library(scales)
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+loan_ds <- read.csv("C:/dev/udacity-nd-R/prosperLoanData.csv")
+summary(loan_ds)
+str(loan_ds)
+```
+# Format Loans Date , create a new year variable and plot Loans taken by Year
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(17))
+
+#creating new variables: year of origination
+loan_ds$LoanOriginationDate <- as.Date(loan_ds$LoanOriginationDate,format = "%Y-%m-%d")
+loan_ds$LoanOriginationDate.year=format(loan_ds$LoanOriginationDate, "%Y")
+
+#plot the numb of loans by year of origination
+ggplot(aes(x = LoanOriginationDate.year), data = loan_ds) +
+  geom_histogram() + 
+  ggtitle('Number of Loans by Year')
+```
+
+# Univariate Plots Section
+Loan Meta Data: Amount Borrowed by Month of Loan Origination
+```{r echo=FALSE, Univariate_Plots}
+
+
+#creating new variables: month of origination
+months <- c('Jan','Feb','Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep','Oct',
+              'Nov', 'Dec')
+loan_ds$LoanOriginationDate.month=format(loan_ds$LoanOriginationDate, "%b")
+loan_ds$LoanOriginationDate.month <- factor(loan_ds$LoanOriginationDate.month, months)
+
+#bar plot with the count of lons by month of origin
+ggplot(aes(x = LoanOriginationDate.month, y = LoanOriginalAmount), data = loan_ds) +
+  geom_bar(stat="identity") +
+  #Used scales to set the y axis to be non scientific
+  scale_y_continuous(labels = comma) +
+  ggtitle('Loan Amount Borrowed By Month')
+```
+
+Amount Loaned vs prosper rating.
+
+```{r echo=FALSE}
+loan_ds$ProsperRating <-
+  factor(loan_ds$ProsperRating..Alpha,
+         levels = c('AA', 'A', 'B', 'C', 'D', 'E', 'HR', 'NA'))
+ggplot(loan_ds, aes(ProsperRating)) +
+  geom_histogram(aes(fill = ProsperRating)) +
+  ggtitle('Number of Loans by Prosper Rating') +
+  xlab('Prosper Rating') +
+  ylab('Number of Loans')
+
+# Histogram of Amount Loaned by Propser Rating
+ggplot(loan_ds, aes(ProsperRating, LoanOriginalAmount)) +
+  geom_bar(stat='identity', aes(fill = ProsperRating)) +
+  scale_y_continuous(labels = comma) +
+  ggtitle('Amount Loaned by Prosper Rating') +
+  xlab('Prosper Rating') +
+  ylab('Amount Loaned')
+```
+
+Number of Loans grouped by Category
+
+```{r echo=FALSE}
+
+
+ggplot(aes(x = ListingCategory..numeric.), 
+       data = subset(loan_ds, !is.na(ProsperRating..numeric.))) +
+  geom_histogram() + 
+  scale_y_continuous(breaks = seq(2000, 54000, 10000))
+
+```
+
+Borrower Profile: How Much of the Monhtly Income Is Committed to Loans ?
+
+```{r}
+#quantiles for the DebtToIncomeRatio
+summary(subset(loan_ds, !is.na(DebtToIncomeRatio))$DebtToIncomeRatio)
+
+#set theme
+theme_set(theme_minimal(17))
+
+#filtered data, excluding the DI greater than 99% of the collection
+filtered_ds <- subset(loan_ds,!is.na(DebtToIncomeRatio))
+exclude <- quantile(filtered_ds$DebtToIncomeRatio, 0.99)
+
+#histogram of DI and the same histogram with the levels of DI log-transformed
+p1 <- ggplot(aes(x = DebtToIncomeRatio), 
+       data = subset(filtered_ds, DebtToIncomeRatio<exclude)) +
+  geom_histogram(binwidth = 1/15)
+
+p2 <- p1 + 
+  scale_x_log10() + 
+  xlab("log(DebtToIncomeRatio)")
+
+#plot p1 and p2 into a unique figure
+grid.arrange(p1, p2, ncol=1)
+  
+
+```
+Most of people have less than 30% of their income committed to debts. 
+
+```{r echo=FALSE}
+
+#set theme
+theme_set(theme_minimal(17))
+
+#create summary of borrower rate
+summary(loan_ds$BorrowerRate)
+
+#plot a histograma of the borrower rate
+ggplot(aes(x = BorrowerRate), data = loan_ds) +
+  geom_histogram() + 
+  ggtitle('Frequency of Interest Rate')
+
+#plot a histograma of the borrower rate with modify binwidth
+ggplot(aes(x = BorrowerRate), data = loan_ds) +
+  geom_histogram(binwidth = 0.005) + 
+  ggtitle('Frequency of Interest Rate (bin width =  0.5%)')
+
+```
+
+# Univariate Analysis
+Evidences that people take more loans in specific months and years. Also the drop ofthe loan count in 2009 was tied to the regulatory issue with prosper matches. Income to debt ration analysis confirm that most people attach less tan 30% of income to debts
+
+
+```{r echo=FALSE}
+
+```
+
+### What is the structure of your dataset?
+
+### What is/are the main feature(s) of interest in your dataset?
+
+Features of interest in the lending/loan data set
+Term: The length of the loan expressed in months;
+LoanStatus: The current status of the loan, as Cancelled, Defaulted, etc;
+ClosedDate: Closed date, when applicable;
+BorrowerRate: The Borrower's interest rate for the loan;
+ProsperRating (numeric): The Risk Rating assigned at the time the listing was created. Varies from 0 (worst) to 7 (best);
+ListingCategory: The category of the listing that the borrower selected when posting their listing;
+IsBorrowerHomeowner: If the Borrower is classified as a homeowner by the Prosper Criteria;
+DebtToIncomeRatio: The debt to income ratio of the borrower at the time the credit profile was pulle. This value is capped at 10.01;
+StatedMonthlyIncome: The monthly income the borrower stated at the time the listing was created;
+LoanOriginalAmount: The origination amount of the loan;
+LoanOriginationDate: The date the loan was originated.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+
+### Did you create any new variables from existing variables in the dataset?
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+
+
+# Bivariate Plots Section
+```{r echo=FALSE, Bivariate_Plots}
+#set theme
+theme_set(theme_minimal(17))
+
+#scatter plot of Borrower Rate by risk. 
+ggplot(aes(y = BorrowerRate, x = ProsperRating..numeric.), 
+       data = subset(loan_ds, loan_ds$StatedMonthlyIncome < 10000 &
+                       !is.na(ProsperRating..numeric.))) +
+  geom_point(alpha = 1/20, position = position_jitter( h = 0))
+
+```
+
+Interest Rate of Home owners
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(17))
+
+#plot boxplot of borrowers rate diveded by IsHomeOwner
+ggplot(aes(x = IsBorrowerHomeowner, y =BorrowerRate),
+       data = subset(loan_ds,!is.na(DebtToIncomeRatio) )) +
+  scale_color_brewer(type = 'div') +
+  geom_boxplot(color = "black") +
+  ggtitle('Rate when Borrower is a Home Owner')
+```
+
+Mean Monthly payment of Defaulted/Charged off loans grouped by state
+```{r echo=FALSE}
+loan_ds.defaulted_chargedoff_statewise  <- loan_ds %>%
+  filter(LoanStatus=='Defaulted' | LoanStatus=='ChargedOff')%>%
+  group_by(BorrowerState)%>%
+  summarise(mean_monthly_payment = mean(MonthlyLoanPayment),mean_borrower_rate=mean(BorrowerRate),n=n()) %>%
+  arrange(BorrowerState)
+ggplot(loan_ds.defaulted_chargedoff_statewise,aes(x=BorrowerState,y=mean_monthly_payment)) +geom_point()
+summary(loan_ds.defaulted_chargedoff_statewise)
+```
+
+Monthly Income and Interest Rate
+
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(14))
+loan_ds$DebtToIncomeRatio.bucket <- cut(loan_ds$DebtToIncomeRatio, 
+                                  breaks = c(0,0.14,0.22,0.31,1, 2, 4, 6, 10.2))
+#box plot of income range by DI buckets
+ggplot(aes(y = StatedMonthlyIncome, x = DebtToIncomeRatio.bucket), 
+       data = subset(loan_ds,!is.na(ProsperRating..numeric.))) +
+  coord_cartesian(ylim=c(0, 10000)) +
+  geom_boxplot() +
+  ggtitle("Distribution of Monthly Income by Debt to Income category\n")
+```
+
+ Debts and Interest Rate
+ 
+ 
+# Bivariate Analysis
+ The more one is in debt, the more expensive is to take more loans.
+```{r echo=FALSE}
+ggplot(aes(y = BorrowerRate, x = DebtToIncomeRatio.bucket), 
+       data = subset(loan_ds,  !is.na(ProsperRating..numeric.))) +
+  geom_boxplot() +
+  ggtitle("Distribution of Borrower Rate by Debt to Income category")
+```
+
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(17))
+
+#grouping by prosper rating, summarizing Risk category with counts of defaulted
+#loans and total count and using it to calcultae the defaulted percentual
+risk_groups <- group_by(loan_ds ,ProsperRating..numeric.)
+loan_ds.risk_groups <- summarise(risk_groups,
+                             Count = n(),
+                             Defaulted = 
+                               sum(LoanStatus=="Chargedoff" | LoanStatus =="Defaulted"))
+
+defaulted_by_risk <- mutate(loan_ds.risk_groups,
+                            DefaultedPercent = Defaulted/Count,
+                            notDefaulted= 1 - DefaultedPercent)
+
+data_new <- melt(defaulted_by_risk[,c('notDefaulted','DefaultedPercent')])
+row <- as.factor(rep(1:7,length=nrow(data_new)))
+df <- cbind(data_new, row)
+
+#plot a stacked bar chart showing the participation of defaulted loans by risk 
+#category
+ggplot(df, aes(x=row, y=value, fill=variable)) + 
+  theme(legend.position = "none") +
+  geom_bar(stat="identity") +
+  xlab("\nProsper Rating") +
+  ylab("Percentage\n") +
+  scale_fill_economist()+   
+  ggtitle("Proportion of defaulted loans \non each Risk Category")
+```
+
+
+
+### What was the strongest relationship you found?
+Debt to Income Ration is closely related to loan issuance. Bad risk score directly impact the loan issuance decision
+
+
+
+# Multivariate Plots Section
+Interest Rate, Term and Debt Ratio
+
+```{r echo=FALSE, Multivariate_Plots}
+#set theme
+theme_set(theme_minimal(17))
+loan_ds$Term.fac <- as.factor(loan_ds$Term)
+#scatter plot of interest rate by DI ratio category, colored by term
+ggplot(aes(x = DebtToIncomeRatio.bucket, y =BorrowerRate, color = Term.fac ),
+       data =  subset(loan_ds, !is.na(DebtToIncomeRatio.bucket))) +
+  theme(legend.position = "bottom") +
+  geom_point( position = position_jitter( h = 0)) +
+  scale_color_economist() +  
+  ggtitle('BorrowerRate by Term and Debt to Income Ratio') 
+```
+
+Percentages of D/I ratio Buckets by Term
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(17))
+
+#include numbers in the place of buckets text
+loan_ds$DebtToIncomeRatio.bucketN <- as.integer(
+  loan_ds$DebtToIncomeRatio.bucket)
+
+#grouping by the Term and DI bucket, then summarizing the groups to find out the
+#percentage of each DI bucket on each term
+term_groups <- group_by(subset(loan_ds, !is.na(DebtToIncomeRatio)),
+                        Term.fac,DebtToIncomeRatio.bucket)
+loan_ds.di_by_term <- summarise(term_groups,n = n())
+di_by_term <- mutate(loan_ds.di_by_term,
+                     sum.n = sum(n),
+                     "TotalPercentage" =  n/sum.n)
+df <- di_by_term[,c("DebtToIncomeRatio.bucket",
+                     "Term.fac",
+                     "TotalPercentage")]
+
+#grouping and summarise higher DI ratio data
+term_groups2 <- group_by(subset(loan_ds, !is.na(DebtToIncomeRatio) &
+                                  DebtToIncomeRatio>1 ),
+                         Term.fac,DebtToIncomeRatio.bucket)
+
+loan_ds.di_by_term2 <- summarise(term_groups2,n = n())
+di_by_term2 <- mutate(loan_ds.di_by_term2, sum.n = sum(n),
+                      "TotalPercentage" =  n/sum.n)
+
+df2 <- di_by_term2[,c("DebtToIncomeRatio.bucket",
+                      "Term.fac",
+                      "TotalPercentage")]
+
+#define a array of colors to be uses in the chart
+my_color_pallete <- c("#ece7f2", "#d0d1e6", "#a6bddb", "#74a9cf", "#3690c0", 
+                      "#0570b0", "#045a8d", "#023858")
+
+
+#plot a stacked bar chart of the percebtage of each bucket on Term category
+p1 <- ggplot(df, aes(x=Term.fac, y=TotalPercentage, 
+                     fill=DebtToIncomeRatio.bucket)) + 
+  geom_bar(stat="identity") +
+  xlab("\nTerm") +
+  ylab("Percentage\n") +
+  scale_fill_manual(values = my_color_pallete ) +
+  ggtitle("% of Debt to Income Bucket \non each Term")
+
+#the same as before, but plotting just the higer DI buckets
+p2 <- ggplot(df2, aes(x=Term.fac, y=TotalPercentage, 
+                      fill=DebtToIncomeRatio.bucket)) + 
+  geom_bar(stat="identity") +
+  xlab("\nTerm") +
+  ylab("Percentage\n") +
+  scale_fill_manual(values = my_color_pallete[5:8] ) +
+  ggtitle("% of Debt to Income Bucket \non each Term (DI>=1)")
+
+#plot p1 and p2 in one figure
+grid.arrange(p1,p2, ncol=1)
+```
+
+Interest Rates with different Terms Changed Over Years
+```{r echo=FALSE}
+#set theme
+theme_set(theme_minimal(17))
+
+#plot boxplot of BorrowerRate by term and faceting by year
+ggplot(aes(x = Term.fac, y = BorrowerRate), 
+       data = subset(loan_ds, DebtToIncomeRatio < 0.14)) +
+  geom_boxplot() +
+  facet_wrap(~LoanOriginationDate.year) + 
+  ggtitle("Borrower Rate by Term and Year\n(D/I < 0.14)")
+```
+
+# Multivariate Analysis
+worst debt to Income Ratios are more common in loans with terms of 36 months.
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+### Were there any interesting or surprising interactions between features?
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+
+```{r echo=FALSE, Plot_One}
+#set theme
+theme_set(theme_minimal(14))
+
+#grouping by Origination month, then summarizing the grouped data to 
+#find out the defaulted ration on each month
+originDate_groups <- group_by(loan_ds ,LoanOriginationDate.month)
+loan_ds.originDate_groups <- summarise(originDate_groups,
+                             Count = n(),
+                             Defaulted = 
+                               sum(LoanStatus=="Chargedoff" | LoanStatus =="Defaulted"))
+defaulted_by_month <- mutate(loan_ds.originDate_groups,
+                            DefaultedPercent = Defaulted/Count,
+                            notDefaulted= 1 - DefaultedPercent)
+
+l_months <- c('Jan','Feb','Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep','Oct',
+              'Nov', 'Dec')
+
+data2 <- melt(defaulted_by_month[,c('DefaultedPercent')])
+row <- factor(rep(l_months,length=12),l_months)
+df <- cbind(data2, row)
+
+#bar chart with defaulted ratio by month
+p2 <- ggplot(df, aes(x=row, y=value, fill=variable)) + 
+  theme(legend.position = "None") +
+  geom_bar(stat = "identity") +
+  scale_fill_economist()+   
+  ggtitle("Percentage of Defaulted Loans \nBy Month of Origination")+ 
+  ylab("Percentage\n") + 
+  xlab("\nMonth")
+
+#plot the boxplot of borrower rate by month, ,I am plotting it to help explain 
+#my thoughts
+p3 <- ggplot(loan_ds, aes(x=LoanOriginationDate.month, y=BorrowerRate)) + 
+  geom_boxplot() + 
+  ggtitle("Distribution of Borrower Rate \nBy Month of Origination")+ 
+  ylab("Borrower Rate\n") + 
+  xlab("\nMonth")
+
+#plot p1 and p2 in one figure
+grid.arrange(p2,p3, ncol=1)
+
+#by(filtered_d$BorrowerRate,filtered_d$LoanOriginationDate.month,summary)
+```
+
+### Description One
+The percentage of defaulted loans increased from February (6%) to March (9%) with a peak in April (12%). The average borrower rate also increased during these months from 15% to 17% to 20%. Overall, the interest rate ranged from around 5% to 35% in the data selected. Also, the sazonality in both features is similar. In January, February and December were the smallest medians of Borrower rates (around 17%) and percentage of defaulted loans (5%, 6% and 6% again).
+
+In other words, ss the percentage of defaulted loans increases, the average borrower rate also increases. With this chart, I suppose that both variable were linked somewhat and this insight drove to my last analyzes on this data set.
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+#set theme
+theme_set(theme_minimal(14))
+
+#plot boxplot of Borrower rate by Term, faceting by year
+s<-"Borrower Rate by Term in months\nand Year of Origination (D/I < 0.14)\n"
+ggplot(aes(x = Term.fac, y = BorrowerRate), 
+       data = subset(loan_ds, DebtToIncomeRatio < 0.14)) +
+  geom_boxplot() +
+  facet_wrap(~LoanOriginationDate.year) + 
+  ggtitle(s) + 
+  ylab("Borrower Rate\n") + 
+  xlab("\nTerm")
+```
+
+### Description Two
+The average borrower rate of loans with term of 36 months and Debt to Income Ratio smaller than 0.14, increased from 2010 (19%) to 2012 (20%) and decreased to 2014 (12%), the smallest average rate for this term. The loans with term of 60 months increased from 2010 (14%) to 2012 (21%) and decreased to 2014 (16%). The average borrower rate of terms of 60 months became higher than the term of 36 month since 2012. Although the interest rate for terms of 12 months has become more dispersed, the maximum value for its average was around 12%.
+
+Also, the figure above shows that the loans with 12 and 60 months have begun to be made in 2010, with the average borrower rate much smaller than loans with 36 month. As pointed before, in 2011, the loans with the two Terms have already begun to be more dispersed, although the distance between the second and the third quartile always was more wide in the loans with Terms of 36 months.
+
+I would say that the borrower rate of loans with term of 60 month has became really greater than the 36 months in 2014, when even the second quartile of the 60 months almost became greater than the third quartile of loans with term of 36 months.
+
+This chart helped me understand how the dynamic of the borrowers rates changed through the years. Initially I had observed that loans with 36 month had been more dispersed than the 60 month and I assumed that it was a characteristic of the loans. After this chart, I wondered if there were another reason for the dispersion.
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+theme_set(theme_minimal(14))
+
+loan_ds$ClosedDate <- as.Date(loan_ds$ClosedDate,format = "%Y-%m-%d")
+loan_ds$ClosedDate.month=format(loan_ds$ClosedDate, "%b")
+loan_ds$ClosedDate.year <- format(loan_ds$ClosedDate, "%Y")
+loan_ds$ClosedDate.month <- factor(loan_ds$ClosedDate.month, months)
+#grouping by the Term and Closed Year, then summarizing the grouped data to 
+#find out the defaulted ration on each year
+loan_ds_v2 <- subset(loan_ds, DebtToIncomeRatio < 0.14 &
+                                    !is.na(ClosedDate.year))
+term_groups_14 <- group_by( loan_ds_v2,Term.fac, ClosedDate.year)
+
+loan_ds.term_groups_14 <- summarise(term_groups_14,
+                             Count = n(),
+                             Defaulted = 
+                               sum(LoanStatus=="Chargedoff" | LoanStatus=="Defaulted"))
+
+defaulted_by_term_14 <- mutate(loan_ds.term_groups_14,
+                            DefaultedPercent = Defaulted/Count)
+
+term_groups_org <- group_by( loan_ds_v2,Term.fac, LoanOriginationDate.year)
+
+loan_ds.term_groups_org <- summarise(term_groups_org,
+                             Interest_Median = median(BorrowerRate))
+
+#plot summaries
+s<-"% of defaulted loans by\n Closed Year (D/I < 0.14)"
+s2<-"Median(Borrower Rate) by \n Origination Year (D/I < 0.14)"
+
+#plot the defaulted loans percentage by closed year and Term
+p1 <- ggplot(aes(x=ClosedDate.year, 
+           y=DefaultedPercent,
+           fill = Term.fac),
+             data = defaulted_by_term_14) +
+  theme(legend.position = "bottom") +
+  geom_bar(stat="identity", position = "dodge") + 
+  scale_fill_economist(name = "Term \nin Months") + 
+  ggtitle(s) + 
+  ylab("Percentual\n") + 
+  xlab("\nClosed Year")
+
+#plot the interest rate median by origination year and Term
+p2 <- ggplot(aes(x=LoanOriginationDate.year, 
+           y=Interest_Median,
+           fill = Term.f),
+             data = loan_ds.term_groups_org) +
+  theme(legend.position = "bottom") +
+  geom_bar(stat="identity", position = "dodge") + 
+  scale_fill_economist(name = "Term \nin Months") + 
+  ggtitle(s2) + 
+  ylab("Median(Borrower Rate)\n") + 
+  xlab("\nOrigination Year")
+
+#plot p1 and p2 in one figure
+grid.arrange(p1, ncol=1)
+```
+
+### Description Three
+The percentage of defaulted loans with term of 60 months increased from 2012 (20%) to 2013 (33%) and decreased in 2014 (29%). In comparison, the defaulted ratio with term of 36 month has become smaller than the Term of 60 months when it slightly decreased from 2012 (23%) to 2013 (22%) and in 2014 (18%). The defaulted ratio of loans with 12 months never rose from 7%.
+
+In the chart above, I decided to use the year when the loans were closed because I had imagined that years when were verified a increase in defaulted ratio, the borrower rates probably would also increase.
+
+As can be seen, in fact, it happened. In 2013 and 2014, when the defaulted ratio of the loans with term of 60 month sharply increasesd(as shown above), the median of borrowers rate also increased (as shows the Second Figure).
+
+I choose this last figure because this relation between defaulted ratio and borrower rate helped me to understand why the borrower rate changed his behaviour throughout the years between different terms.
+------
+
+# Reflection
+
+Initially, the big data set and the number of features created lot of confusion around what to pick and what not pick as a variable. But once started to poke around the data, trying to find something interesting to explore, without success. Then, I decided to make some assumptions and try to check them in the collection. After that, my project took off.
+
+After pursuing too many libraries putting them all to work at once initially was very difficult . But slowly got used to it.During my analysis, I verified that many variables that I have believed that would have a greater effect on Borrowers rate, actually presented just a smaller role. Maybe if I tried to build a model to predict the borrower rate, all these variables would be useful, but not alone, just together.
+
+At the end, I just found two variable that helped me to understand the borrower rate variations. Debt to Income Ratio and the overall Defaulted ratio. The last one was curious. It seems be connected to the level of all interest rates for a particular year.
+
+I also did not find any good reason to transform any variable. I have expected to find something, given that the data set is related to money.
