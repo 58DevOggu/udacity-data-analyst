@@ -110,12 +110,13 @@ g_clf = SGDClassifier(loss='log')
 
 ### Decision Tree Classifier
 from sklearn.tree import DecisionTreeClassifier
-dt_clf = DecisionTreeClassifier()
+dt_clf = DecisionTreeClassifier(min_samples_split=5)
 
 helper.evaluate_clf(l_clf, features, labels)
 helper.evaluate_clf(k_clf, features, labels)
 helper.evaluate_clf(gnb_clf, features, labels)
-
+helper.evaluate_clf(dt_clf, features, labels)
+helper.evaluate_clf(s_clf,features,labels)
 ### Final Machine Algorithm Selection
 clf = l_clf
 

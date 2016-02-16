@@ -11,7 +11,7 @@ import pickle
 import sys
 from numpy import mean
 from sklearn import cross_validation
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score ,f1_score
 sys.path.append("../tools/")
 
 from feature_format import featureFormat
@@ -96,6 +96,7 @@ def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
     accuracy = []
     precision = []
     recall = []
+    f1score =[]
     first = True
     for trial in range(num_iters):
         features_train, features_test, labels_train, labels_test =\
@@ -105,6 +106,7 @@ def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
         accuracy.append(accuracy_score(labels_test, predictions))
         precision.append(precision_score(labels_test, predictions))
         recall.append(recall_score(labels_test, predictions))
+        f1score.append(f1_score(labels_test, predictions))
         if trial % 10 == 0:
             if first:
                 sys.stdout.write('\nProcessing')
@@ -115,4 +117,5 @@ def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
     print "done.\n"
     print "precision: {}".format(mean(precision))
     print "recall:    {}".format(mean(recall))
+    print "F1Score:    {}".format(mean(f1score))
     return mean(precision), mean(recall)
