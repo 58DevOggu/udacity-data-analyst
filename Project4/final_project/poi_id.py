@@ -3,11 +3,14 @@
 import sys
 import pickle
 import helper
+
 from copy import copy
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
-from tester import dump_classifier_and_data
+from tester import dump_classifier_and_data , test_classifier
+from sklearn.preprocessing import StandardScaler
+
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -63,6 +66,9 @@ helper.add_email_features(my_dataset,my_feature_list)
 print "{0} selected features: {1}\n".format(len(my_feature_list) - 1, my_feature_list[1:])
 
 ## Plot Added Features
+#helper.visualize(my_dataset,"from_poi_to_this_person","from_this_person_to_poi")
+#helper.visualize(my_dataset,"fraction_from_poi_email","fraction_to_poi_email")
+
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, my_feature_list, sort_keys = True)
@@ -86,8 +92,11 @@ gnb_clf = GaussianNB()
 
 ### Logistic Regression Classifier
 from sklearn.linear_model import LogisticRegression
-l_clf = LogisticRegression(C=10**18, tol=10**-21)
+### WIth auto class weight 
+### tuned classweight to auto to improve the recall score
+l_clf = LogisticRegression(C=10**18, tol=10**-21 , class_weight='auto')
 
+#l_clf = LogisticRegression(C=10**18, tol=10**-21 )
 ### K-means Clustering
 from sklearn.cluster import KMeans
 k_clf = KMeans(n_clusters=2, tol=0.001)
@@ -112,14 +121,29 @@ g_clf = SGDClassifier(loss='log')
 from sklearn.tree import DecisionTreeClassifier
 dt_clf = DecisionTreeClassifier(min_samples_split=5)
 
+### K Neghbors
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
+
+
+estimators = [('reduce_dim', PCA()),
+              ('KNeighbors', KNeighborsClassifier())]
+kneig_clf = Pipeline(estimators)
+kneig_clf.set_params(KNeighbors__n_neighbors =  4)
+kneig_clf.set_params(KNeighbors__p =  3)
+kneig_clf.set_params(reduce_dim__n_components =  2)
+
+#Evaluate Classifiers
+helper.evaluate_clf(kneig_clf, features, labels)
 helper.evaluate_clf(l_clf, features, labels)
 helper.evaluate_clf(k_clf, features, labels)
 helper.evaluate_clf(gnb_clf, features, labels)
 helper.evaluate_clf(dt_clf, features, labels)
 helper.evaluate_clf(s_clf,features,labels)
+
 ### Final Machine Algorithm Selection
 clf = l_clf
-
 
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
