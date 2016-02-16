@@ -62,6 +62,8 @@ helper.add_networth(my_dataset, my_feature_list)
 helper.add_email_features(my_dataset,my_feature_list)
 print "{0} selected features: {1}\n".format(len(my_feature_list) - 1, my_feature_list[1:])
 
+## Plot Added Features
+
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, my_feature_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
@@ -105,6 +107,10 @@ rf_clf = RandomForestClassifier()
 ### Stochastic Gradient Descent - Logistic Regression
 from sklearn.linear_model import SGDClassifier
 g_clf = SGDClassifier(loss='log')
+
+### Decision Tree Classifier
+from sklearn.tree import DecisionTreeClassifier
+dt_clf = DecisionTreeClassifier()
 
 helper.evaluate_clf(l_clf, features, labels)
 helper.evaluate_clf(k_clf, features, labels)

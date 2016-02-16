@@ -99,7 +99,7 @@ def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
     first = True
     for trial in range(num_iters):
         features_train, features_test, labels_train, labels_test =\
-            cross_validation.train_test_split(features, labels, test_size=test_size)
+            cross_validation.train_test_split(features, labels, test_size=test_size,random_state=42)
         clf.fit(features_train, labels_train)
         predictions = clf.predict(features_test)
         accuracy.append(accuracy_score(labels_test, predictions))
